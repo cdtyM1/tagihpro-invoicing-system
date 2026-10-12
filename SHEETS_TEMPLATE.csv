@@ -1,0 +1,16 @@
+SHEET_NAME,COLUMN_HEADERS,SAMPLE_DATA
+customers,"id,name,company,phone,email","c1,Budi Santoso,PT Maju Sejahtera,6281234567890,budi@maju.co.id
+c2,Siti Aminah,CV Berkah Jaya,6289876543210,siti@berkah.com
+c3,Rian Pratama,UD Karya Utama,6281122334455,rian@karyautama.id"
+invoices,"id,number,customerId,amount,status,issueDate,dueDate,remindersSent","inv1,INV/2026/001,c1,2500000,Belum Lunas,2026-10-01,2026-10-15,H-3
+inv2,INV/2026/002,c2,1200000,Jatuh Tempo,2026-10-05,2026-10-10,H-3|H-1
+inv3,INV/2026/003,c3,4500000,Lunas,2026-09-20,2026-10-04,H-3|H-1|Hari H"
+logs,"id,time,channel,recipient,invoice,message,status","l1,2026-10-12 09:30,WhatsApp,Budi Santoso (PT Maju Sejahtera),INV/2026/001,Halo Budi Santoso tagihan INV/2026/001 sebesar Rp 2.500.000...,Terkirim
+l2,2026-10-12 10:15,Email,Siti Aminah (CV Berkah Jaya),INV/2026/002,Kepada Yth. Siti Aminah tagihan dengan nomor INV/2026/002...,Terkirim"
+settings,"key,value","reminder_h3,true
+reminder_h1,true
+reminder_h0,true
+reminder_overdue,true
+wa_template,Halo {nama} dari {perusahaan} Kami mengingatkan bahwa tagihan invoice #{invoice_no} senilai {nominal} akan jatuh tempo pada {due_date}. Mohon lakukan pembayaran tepat waktu. Terima kasih!
+email_subject,Pengingat Tagihan Pembayaran - {invoice_no}
+email_body,Kepada Yth. {nama} ({perusahaan}) Berikut adalah pengingat bahwa tagihan dengan nomor #{invoice_no} senilai {nominal} akan jatuh tempo pada tanggal {due_date}. Terima kasih atas kerja samanya."
