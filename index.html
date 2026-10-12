@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penagihan & Invoice Pelanggan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 antialiased flex flex-col">
+
+    <div id="app" class="min-h-full flex flex-col">
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md shadow-indigo-100 flex items-center justify-center">
+                        <i data-lucide="receipt" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 tracking-tight">TagihPro<span class="text-indigo-600">.</span></h1>
+                        <p class="text-xs text-slate-500 font-medium hidden sm:block">Sistem Penagihan, WhatsApp & Email Otomatis</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <button onclick="openReminderSettingsModal()" class="hidden md:flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                        <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>
+                        <span>Atur Pengingat Otomatis</span>
+                    </button>
+                    <button onclick="triggerAutoCheckReminders()" class="flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition shadow-sm">
+                        <i data-lucide="bell-ring" class="w-4 h-4 text-indigo-600 animate-bounce"></i>
+                        <span>Cek Jatuh Tempo Hari Ini</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <section aria-labelledby="stats-heading">
+                <h2 id="stats-heading" class="sr-only">Ringkasan Statistik Tagihan</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Tagihan</p>
+                            <h3 id="stat-total-amount" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+                            <p id="stat-total-count" class="text-xs text-slate-500 mt-1">0 invoice keseluruhan</p>
+                        </div>
+                        <div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+                            <i data-lucide="wallet" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-amber-500">Belum Lunas</p>
+                            <h3 id="stat-unpaid-amount" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+                            <p id="stat-unpaid-count" class="text-xs text-slate-500 mt-1">0 invoice pending</p>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                            <i data-lucide="clock" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-rose-500">Jatuh Tempo / Terlambat</p>
+                            <h3 id="stat-overdue-amount" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+                            <p id="stat-overdue-count" class="text-xs text-slate-500 mt-1">0 invoice perlu perhatian</p>
+                        </div>
+                        <div class="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600">
+                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-emerald-500">Sudah Lunas</p>
+                            <h3 id="stat-paid-amount" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+                            <p id="stat-paid-count" class="text-xs text-slate-500 mt-1">0 invoice terselesaikan</p>
+                        </div>
+                        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 px-6 pt-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex space-x-2">
+                        <button onclick="switchTab('invoices')" id="tab-btn-invoices" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 transition">
+                            Daftar Invoice & Penagihan
+                        </button>
+                        <button onclick="switchTab('customers')" id="tab-btn-customers" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition">
+                            Manajemen Customer
+                        </button>
+                        <button onclick="switchTab('logs')" id="tab-btn-logs" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition flex items-center space-x-1.5">
+                            <span>Log Pesan WA & Email</span>
+                            <span id="log-count-badge" class="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded-full font-bold">0</span>
+                        </button>
+                    </div>
+
+                    <div class="pb-3 flex items-center space-x-2">
+                        <div id="invoice-actions" class="flex items-center space-x-2">
+                            <button onclick="openAddInvoiceModal()" class="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-100 transition">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Buat Invoice Baru</span>
+                            </button>
+                        </div>
+                        <div id="customer-actions" class="hidden flex items-center space-x-2">
+                            <button onclick="openAddCustomerModal()" class="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-100 transition">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                <span>Tambah Customer</span>
+                            </button>
+                        </div>
+                        <div id="log-actions" class="hidden flex items-center space-x-2">
+                            <button onclick="clearLogs()" class="flex items-center space-x-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
+                                <i data-lucide="trash-2" class="w-4 h-4 text-slate-500"></i>
+                                <span>Bersihkan Log</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div id="tab-content-invoices" class="space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="relative flex-1 max-w-sm">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <i data-lucide="search" class="w-4 h-4"></i>
+                                </span>
+                                <input type="text" id="search-invoice" oninput="renderInvoices()" placeholder="Cari nomor invoice atau customer..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 transition">
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <select id="filter-status" onchange="renderInvoices()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 focus:outline-none focus:border-indigo-500 transition">
+                                    <option value="ALL">Semua Status</option>
+                                    <option value="Belum Lunas">Belum Lunas</option>
+                                    <option value="Jatuh Tempo">Jatuh Tempo</option>
+                                    <option value="Lunas">Lunas</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                                        <th class="py-3.5 px-4">Invoice / Customer</th>
+                                        <th class="py-3.5 px-4">Nominal</th>
+                                        <th class="py-3.5 px-4">Tgl Terbit & Jatuh Tempo</th>
+                                        <th class="py-3.5 px-4">Status</th>
+                                        <th class="py-3.5 px-4">Auto-Reminders</th>
+                                        <th class="py-3.5 px-4 text-right">Aksi Cepat (WA & Email)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoice-table-body" class="divide-y divide-slate-100 text-xs text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-customers" class="hidden space-y-4">
+                        <div class="relative flex-1 max-w-sm">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                            </span>
+                            <input type="text" id="search-customer" oninput="renderCustomers()" placeholder="Cari nama, perusahaan, atau nomor WA..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 transition">
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                                        <th class="py-3.5 px-4">Nama Pelanggan & Perusahaan</th>
+                                        <th class="py-3.5 px-4">Nomor WhatsApp</th>
+                                        <th class="py-3.5 px-4">Email</th>
+                                        <th class="py-3.5 px-4 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customer-table-body" class="divide-y divide-slate-100 text-xs text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-logs" class="hidden space-y-4">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs text-slate-500">Riwayat log pengiriman pesan pengingat tagihan melalui WhatsApp & Email Simulator.</p>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                                        <th class="py-3.5 px-4">Waktu</th>
+                                        <th class="py-3.5 px-4">Channel</th>
+                                        <th class="py-3.5 px-4">Penerima</th>
+                                        <th class="py-3.5 px-4">Invoice Ref</th>
+                                        <th class="py-3.5 px-4">Isi Pesan</th>
+                                        <th class="py-3.5 px-4 text-right">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="log-table-body" class="divide-y divide-slate-100 text-xs text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="modal-invoice" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h3 id="invoice-modal-title" class="text-base font-bold text-slate-900">Buat Invoice Baru</h3>
+                    <button onclick="closeModal('modal-invoice')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <form id="form-invoice" onsubmit="saveInvoice(event)" class="space-y-4">
+                    <input type="hidden" id="invoice-edit-id">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Invoice</label>
+                        <input type="text" id="inv-number" required placeholder="INV/2026/001" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Customer</label>
+                        <select id="inv-customer-id" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Nominal (Rp)</label>
+                            <input type="number" id="inv-amount" required min="1000" placeholder="1500000" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Status Tagihan</label>
+                            <select id="inv-status" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                                <option value="Belum Lunas">Belum Lunas</option>
+                                <option value="Jatuh Tempo">Jatuh Tempo</option>
+                                <option value="Lunas">Lunas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Terbit</label>
+                            <input type="date" id="inv-issue-date" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Jatuh Tempo (Due Date)</label>
+                            <input type="date" id="inv-due-date" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                        <button type="button" onclick="closeModal('modal-invoice')" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Batal</button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-100 transition">Simpan Invoice</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="modal-customer" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h3 id="customer-modal-title" class="text-base font-bold text-slate-900">Tambah Customer Baru</h3>
+                    <button onclick="closeModal('modal-customer')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <form id="form-customer" onsubmit="saveCustomer(event)" class="space-y-4">
+                    <input type="hidden" id="cust-edit-id">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap Customer</label>
+                        <input type="text" id="cust-name" required placeholder="Budi Santoso" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Perusahaan / Toko</label>
+                        <input type="text" id="cust-company" required placeholder="PT Maju Sejahtera" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor WhatsApp (Format: 628xxxxxxxx)</label>
+                        <input type="text" id="cust-phone" required placeholder="6281234567890" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Email</label>
+                        <input type="email" id="cust-email" required placeholder="budi@maju.co.id" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                        <button type="button" onclick="closeModal('modal-customer')" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Batal</button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-100 transition">Simpan Customer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="modal-reminder-settings" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i data-lucide="settings" class="w-5 h-5 text-indigo-600"></i>
+                        <span>Pengaturan Pengingat Otomatis (Cron Simulator)</span>
+                    </h3>
+                    <button onclick="closeModal('modal-reminder-settings')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="space-y-4 text-xs text-slate-700">
+                    <p class="text-slate-500">Sistem secara otomatis memeriksa tanggal jatuh tempo invoice dan mengirimkan pengingat terjadwal ke WhatsApp & Email pelanggan sesuai konfigurasi berikut:</p>
+
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <span class="font-semibold text-slate-800">H-3 (3 Hari Sebelum Jatuh Tempo)</span>
+                            <input type="checkbox" id="rem-h3" checked class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <span class="font-semibold text-slate-800">H-1 (1 Hari Sebelum Jatuh Tempo)</span>
+                            <input type="checkbox" id="rem-h1" checked class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <span class="font-semibold text-slate-800">Hari H (Tepat Hari Jatuh Tempo)</span>
+                            <input type="checkbox" id="rem-h0" checked class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <span class="font-semibold text-slate-800">H+ (Terlambat / Lewat Jatuh Tempo)</span>
+                            <input type="checkbox" id="rem-overdue" checked class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Template Pesan WhatsApp</label>
+                        <textarea id="tpl-wa" rows="3" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 font-mono">Halo {nama}, Yth. dari {perusahaan}, kami mengingatkan bahwa invoice {invoice_no} sebesar {nominal} akan jatuh tempo pada {due_date}. Mohon segera lakukan pembayaran. Terima kasih!</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Template Subjek & Pesan Email</label>
+                        <input type="text" id="tpl-email-subject" value="Pengingat Tagihan Pembayaran - {invoice_no}" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 mb-2">
+                        <textarea id="tpl-email-body" rows="3" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 font-mono">Kepada Yth. {nama} ({perusahaan}),\n\nBerikut adalah pengingat bahwa tagihan dengan nomor {invoice_no} senilai {nominal} jatuh tempo pada tanggal {due_date}.\n\nMohon abaikan jika pembayaran telah dilakukan.</textarea>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-reminder-settings')" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Tutup</button>
+                    <button type="button" onclick="saveReminderSettings()" class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-100 transition">Simpan Pengaturan</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-simulator" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h3 id="sim-title" class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i data-lucide="send" class="w-5 h-5 text-indigo-600"></i>
+                        <span>Simulasi Pengiriman Pesan</span>
+                    </h3>
+                    <button onclick="closeModal('modal-simulator')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                        <div class="flex justify-between"><span class="text-slate-400">Channel:</span> <span id="sim-channel" class="font-bold text-indigo-600 uppercase">WhatsApp</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Penerima:</span> <span id="sim-recipient" class="font-bold text-slate-800">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Kontak:</span> <span id="sim-contact" class="font-semibold text-slate-700">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Invoice Ref:</span> <span id="sim-inv" class="font-bold text-slate-800">-</span></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Preview Isi Pesan Otomatis</label>
+                        <textarea id="sim-message" rows="5" class="w-full px-3.5 py-2.5 bg-slate-900 text-emerald-400 font-mono rounded-xl text-xs focus:outline-none" readonly></textarea>
+                    </div>
+
+                    <div id="sim-loading" class="hidden flex items-center justify-center space-x-2 py-3 text-indigo-600 text-xs font-semibold">
+                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                        <span>Mengirim pesan melalui Gateway API...</span>
+                    </div>
+
+                    <div id="sim-success" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-semibold flex items-center space-x-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                        <span>Pesan berhasil terkirim ke tujuan!</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-simulator')" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Tutup</button>
+                    <button type="button" id="btn-execute-send" onclick="executeSendMessage()" class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-100 transition flex items-center space-x-1.5">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Kirim Sekarang</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+            <div class="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-xs font-medium">
+                <i id="toast-icon" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+                <span id="toast-msg">Notifikasi berhasil</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'PASTE_URL_APPS_SCRIPT_DISINI';
+
+        let customers = [];
+        let invoices = [];
+        let logs = [];
+        let reminderConfig = {
+            h3: true,
+            h1: true,
+            h0: true,
+            overdue: true,
+            waTemplate: "Halo {nama} dari {perusahaan},\n\nKami mengingatkan bahwa tagihan invoice #{invoice_no} senilai {nominal} akan jatuh tempo pada {due_date}.\n\nMohon lakukan pembayaran tepat waktu.\n\nTerima kasih!",
+            emailSubject: "Pengingat Tagihan Pembayaran - #{invoice_no}",
+            emailBody: "Kepada Yth. {nama} ({perusahaan}),\n\nBerikut adalah pengingat bahwa tagihan dengan nomor #{invoice_no} senilai {nominal} akan jatuh tempo pada tanggal {due_date}.\n\nTerima kasih atas kerja samanya."
+        };
+
+        let currentSimulation = null;
+
+        async function fetchAllData() {
+            try {
+                const [customersRes, invoicesRes, logsRes, settingsRes] = await Promise.all([
+                    fetch(API_URL + '?type=customers'),
+                    fetch(API_URL + '?type=invoices'),
+                    fetch(API_URL + '?type=logs'),
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'getSettings' })
+                    })
+                ]);
+
+                customers = await customersRes.json();
+                invoices = await invoicesRes.json();
+                logs = await logsRes.json();
+
+                const settingsData = await settingsRes.json();
+                if (settingsData && Object.keys(settingsData).length > 0) {
+                    reminderConfig.h3 = settingsData.reminder_h3 === 'true' || settingsData.reminder_h3 === true;
+                    reminderConfig.h1 = settingsData.reminder_h1 === 'true' || settingsData.reminder_h1 === true;
+                    reminderConfig.h0 = settingsData.reminder_h0 === 'true' || settingsData.reminder_h0 === true;
+                    reminderConfig.overdue = settingsData.reminder_overdue === 'true' || settingsData.reminder_overdue === true;
+                    reminderConfig.waTemplate = settingsData.wa_template || reminderConfig.waTemplate;
+                    reminderConfig.emailSubject = settingsData.email_subject || reminderConfig.emailSubject;
+                    reminderConfig.emailBody = settingsData.email_body || reminderConfig.emailBody;
+                }
+
+                invoices = invoices.map(inv => ({
+                    ...inv,
+                    amount: Number(inv.amount || 0),
+                    remindersSent: typeof inv.remindersSent === 'string' ? inv.remindersSent.split('|').filter(Boolean) : Array.isArray(inv.remindersSent) ? inv.remindersSent : []
+                }));
+
+                updateDashboard();
+                renderInvoices();
+                renderCustomers();
+                renderLogs();
+                populateCustomerDropdown();
+                loadReminderSettingsInputs();
+            } catch (error) {
+                console.error('Gagal memuat data dari sheet:', error);
+                showToast('Gagal memuat data dari spreadsheet');
+            }
+        }
+
+        function loadReminderSettingsInputs() {
+            document.getElementById('rem-h3').checked = reminderConfig.h3;
+            document.getElementById('rem-h1').checked = reminderConfig.h1;
+            document.getElementById('rem-h0').checked = reminderConfig.h0;
+            document.getElementById('rem-overdue').checked = reminderConfig.overdue;
+            document.getElementById('tpl-wa').value = reminderConfig.waTemplate;
+            document.getElementById('tpl-email-subject').value = reminderConfig.emailSubject;
+            document.getElementById('tpl-email-body').value = reminderConfig.emailBody;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            await fetchAllData();
+            switchTab('invoices');
+        });
+
+        function formatIDR(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
+        }
+
+        function switchTab(tabName) {
+            ['invoices', 'customers', 'logs'].forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).classList.remove('border-indigo-600', 'text-indigo-600');
+                document.getElementById(`tab-btn-${t}`).classList.add('border-transparent', 'text-slate-500');
+                document.getElementById(`${t}-actions`).classList.add('hidden');
+            });
+
+            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabName}`).classList.add('border-indigo-600', 'text-indigo-600');
+            document.getElementById(`tab-btn-${tabName}`).classList.remove('border-transparent', 'text-slate-500');
+            document.getElementById(`${tabName}-actions`).classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function updateDashboard() {
+            let totalAmt = 0, unpaidAmt = 0, overdueAmt = 0, paidAmt = 0;
+            let totalCnt = invoices.length, unpaidCnt = 0, overdueCnt = 0, paidCnt = 0;
+
+            invoices.forEach(inv => {
+                totalAmt += Number(inv.amount || 0);
+                if (inv.status === 'Belum Lunas') {
+                    unpaidAmt += Number(inv.amount || 0);
+                    unpaidCnt++;
+                } else if (inv.status === 'Jatuh Tempo') {
+                    overdueAmt += Number(inv.amount || 0);
+                    overdueCnt++;
+                } else if (inv.status === 'Lunas') {
+                    paidAmt += Number(inv.amount || 0);
+                    paidCnt++;
+                }
+            });
+
+            document.getElementById('stat-total-amount').innerText = formatIDR(totalAmt);
+            document.getElementById('stat-total-count').innerText = `${totalCnt} invoice keseluruhan`;
+
+            document.getElementById('stat-unpaid-amount').innerText = formatIDR(unpaidAmt);
+            document.getElementById('stat-unpaid-count').innerText = `${unpaidCnt} invoice pending`;
+
+            document.getElementById('stat-overdue-amount').innerText = formatIDR(overdueAmt);
+            document.getElementById('stat-overdue-count').innerText = `${overdueCnt} invoice perlu perhatian`;
+
+            document.getElementById('stat-paid-amount').innerText = formatIDR(paidAmt);
+            document.getElementById('stat-paid-count').innerText = `${paidCnt} invoice terselesaikan`;
+
+            document.getElementById('log-count-badge').innerText = logs.length;
+        }
+
+        function renderInvoices() {
+            const tbody = document.getElementById('invoice-table-body');
+            const search = document.getElementById('search-invoice').value.toLowerCase();
+            const filterStatus = document.getElementById('filter-status').value;
+            tbody.innerHTML = '';
+
+            const filtered = invoices.filter(inv => {
+                const cust = customers.find(c => c.id === inv.customerId) || {};
+                const matchSearch = (inv.number || '').toLowerCase().includes(search) ||
+                    (cust.name || '').toLowerCase().includes(search) ||
+                    (cust.company || '').toLowerCase().includes(search);
+                const matchStatus = filterStatus === 'ALL' || inv.status === filterStatus;
+                return matchSearch && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">Tidak ada data invoice ditemukan.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(inv => {
+                const cust = customers.find(c => c.id === inv.customerId) || { name: 'Unknown', company: '-', phone: '', email: '' };
+
+                let badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                if (inv.status === 'Lunas') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                if (inv.status === 'Jatuh Tempo') badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+
+                let remindersHtml = (inv.remindersSent || []).map(r => `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-semibold text-[10px] rounded-md border border-indigo-100">${r}</span>`).join(' ');
+                if (!remindersHtml) remindersHtml = '<span class="text-slate-400 text-[11px] italic">Belum ada</span>';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">${inv.number}</div>
+                        <div class="text-[11px] text-slate-500">${cust.name} • <span class="font-medium text-slate-600">${cust.company}</span></div>
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-slate-900">${formatIDR(Number(inv.amount || 0))}</td>
+                    <td class="py-3 px-4">
+                        <div class="text-slate-700">Terbit: ${inv.issueDate}</div>
+                        <div class="text-[11px] font-medium text-rose-600">Jatuh Tempo: ${inv.dueDate}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeClass}">${inv.status}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex flex-wrap gap-1">${remindersHtml}</div>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end space-x-1.5">
+                            <button onclick="openSimulator('WhatsApp', '${inv.id}')" title="Kirim WhatsApp Manual" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition border border-emerald-200 flex items-center space-x-1 px-2.5 text-[11px] font-semibold">
+                                <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                                <span>WA</span>
+                            </button>
+                            <button onclick="openSimulator('Email', '${inv.id}')" title="Kirim Email Manual" class="p-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg transition border border-sky-200 flex items-center space-x-1 px-2.5 text-[11px] font-semibold">
+                                <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                                <span>Email</span>
+                            </button>
+                            <button onclick="editInvoice('${inv.id}')" title="Edit Invoice" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteInvoice('${inv.id}')" title="Hapus Invoice" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        function renderCustomers() {
+            const tbody = document.getElementById('customer-table-body');
+            const search = document.getElementById('search-customer').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = customers.filter(c => (c.name || '').toLowerCase().includes(search) || (c.company || '').toLowerCase().includes(search) || (c.phone || '').includes(search));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400">Tidak ada data customer ditemukan.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">${c.name}</div>
+                        <div class="text-[11px] text-slate-500">${c.company}</div>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-slate-700">${c.phone}</td>
+                    <td class="py-3 px-4 text-slate-600">${c.email}</td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end space-x-1.5">
+                            <button onclick="editCustomer('${c.id}')" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteCustomer('${c.id}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById('log-table-body');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">Belum ada riwayat log pesan pengingat.</td></tr>`;
+                return;
+            }
+
+            logs.forEach(l => {
+                let badgeChan = l.channel === 'WhatsApp' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-sky-700 border-sky-200';
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-[11px] text-slate-500">${l.time}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeChan}">${l.channel}</span></td>
+                    <td class="py-3 px-4 font-medium text-slate-800">${l.recipient}</td>
+                    <td class="py-3 px-4 font-bold text-slate-900">${l.invoice}</td>
+                    <td class="py-3 px-4 text-slate-600 max-w-xs truncate" title="${l.message}">${l.message}</td>
+                    <td class="py-3 px-4 text-right"><span class="text-emerald-600 font-semibold text-[11px]">✓ Terkirim</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        function populateCustomerDropdown() {
+            const select = document.getElementById('inv-customer-id');
+            select.innerHTML = '';
+            customers.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.name} (${c.company})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openAddInvoiceModal() {
+            document.getElementById('invoice-modal-title').innerText = 'Buat Invoice Baru';
+            document.getElementById('invoice-edit-id').value = '';
+            document.getElementById('form-invoice').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inv-issue-date').value = today;
+            document.getElementById('inv-due-date').value = today;
+            openModal('modal-invoice');
+        }
+
+        function editInvoice(id) {
+            const inv = invoices.find(i => i.id === id);
+            if (!inv) return;
+            document.getElementById('invoice-modal-title').innerText = 'Edit Invoice';
+            document.getElementById('invoice-edit-id').value = inv.id;
+            document.getElementById('inv-number').value = inv.number;
+            document.getElementById('inv-customer-id').value = inv.customerId;
+            document.getElementById('inv-amount').value = inv.amount;
+            document.getElementById('inv-status').value = inv.status;
+            document.getElementById('inv-issue-date').value = inv.issueDate;
+            document.getElementById('inv-due-date').value = inv.dueDate;
+            openModal('modal-invoice');
+        }
+
+        async function saveInvoice(e) {
+            e.preventDefault();
+            const editId = document.getElementById('invoice-edit-id').value;
+            const data = {
+                id: editId || 'inv_' + Date.now(),
+                number: document.getElementById('inv-number').value,
+                customerId: document.getElementById('inv-customer-id').value,
+                amount: parseFloat(document.getElementById('inv-amount').value),
+                status: document.getElementById('inv-status').value,
+                issueDate: document.getElementById('inv-issue-date').value,
+                dueDate: document.getElementById('inv-due-date').value,
+                remindersSent: editId ? (invoices.find(i => i.id === editId)?.remindersSent || []) : []
+            };
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveInvoice',
+                        data
+                    })
+                });
+
+                closeModal('modal-invoice');
+                await fetchAllData();
+                showToast('Invoice berhasil disimpan');
+            } catch (error) {
+                showToast('Gagal menyimpan invoice');
+            }
+        }
+
+        async function deleteInvoice(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus invoice ini?')) return;
+
+            const target = invoices.find(i => i.id === id);
+            if (!target) return;
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'deleteInvoice',
+                        data: { id: target.id }
+                    })
+                });
+
+                await fetchAllData();
+                showToast('Invoice berhasil dihapus');
+            } catch (error) {
+                showToast('Gagal menghapus invoice');
+            }
+        }
+
+        function openAddCustomerModal() {
+            document.getElementById('customer-modal-title').innerText = 'Tambah Customer Baru';
+            document.getElementById('cust-edit-id').value = '';
+            document.getElementById('form-customer').reset();
+            openModal('modal-customer');
+        }
+
+        function editCustomer(id) {
+            const c = customers.find(item => item.id === id);
+            if (!c) return;
+            document.getElementById('customer-modal-title').innerText = 'Edit Customer';
+            document.getElementById('cust-edit-id').value = c.id;
+            document.getElementById('cust-name').value = c.name;
+            document.getElementById('cust-company').value = c.company;
+            document.getElementById('cust-phone').value = c.phone;
+            document.getElementById('cust-email').value = c.email;
+            openModal('modal-customer');
+        }
+
+        async function saveCustomer(e) {
+            e.preventDefault();
+            const editId = document.getElementById('cust-edit-id').value;
+            const data = {
+                id: editId || 'c_' + Date.now(),
+                name: document.getElementById('cust-name').value,
+                company: document.getElementById('cust-company').value,
+                phone: document.getElementById('cust-phone').value,
+                email: document.getElementById('cust-email').value
+            };
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveCustomer',
+                        data
+                    })
+                });
+
+                closeModal('modal-customer');
+                await fetchAllData();
+                showToast('Customer berhasil disimpan');
+            } catch (error) {
+                showToast('Gagal menyimpan customer');
+            }
+        }
+
+        async function deleteCustomer(id) {
+            if (!confirm('Hapus customer ini? Invoice terkait mungkin kehilangan referensi.')) return;
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'deleteCustomer',
+                        data: { id }
+                    })
+                });
+
+                await fetchAllData();
+                showToast('Customer berhasil dihapus');
+            } catch (error) {
+                showToast('Gagal menghapus customer');
+            }
+        }
+
+        function openReminderSettingsModal() {
+            document.getElementById('rem-h3').checked = reminderConfig.h3;
+            document.getElementById('rem-h1').checked = reminderConfig.h1;
+            document.getElementById('rem-h0').checked = reminderConfig.h0;
+            document.getElementById('rem-overdue').checked = reminderConfig.overdue;
+            document.getElementById('tpl-wa').value = reminderConfig.waTemplate;
+            document.getElementById('tpl-email-subject').value = reminderConfig.emailSubject;
+            document.getElementById('tpl-email-body').value = reminderConfig.emailBody;
+            openModal('modal-reminder-settings');
+        }
+
+        async function saveReminderSettings() {
+            reminderConfig.h3 = document.getElementById('rem-h3').checked;
+            reminderConfig.h1 = document.getElementById('rem-h1').checked;
+            reminderConfig.h0 = document.getElementById('rem-h0').checked;
+            reminderConfig.overdue = document.getElementById('rem-overdue').checked;
+            reminderConfig.waTemplate = document.getElementById('tpl-wa').value;
+            reminderConfig.emailSubject = document.getElementById('tpl-email-subject').value;
+            reminderConfig.emailBody = document.getElementById('tpl-email-body').value;
+
+            const settings = {
+                reminder_h3: String(reminderConfig.h3),
+                reminder_h1: String(reminderConfig.h1),
+                reminder_h0: String(reminderConfig.h0),
+                reminder_overdue: String(reminderConfig.overdue),
+                wa_template: reminderConfig.waTemplate,
+                email_subject: reminderConfig.emailSubject,
+                email_body: reminderConfig.emailBody
+            };
+
+            for (const key of Object.keys(settings)) {
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'saveSettings',
+                            data: { key, value: settings[key] }
+                        })
+                    });
+                } catch (error) {
+                    console.error('Gagal simpan setting:', key, error);
+                }
+            }
+
+            closeModal('modal-reminder-settings');
+            showToast('Konfigurasi pengingat otomatis disimpan');
+        }
+
+        function openSimulator(channel, invoiceId) {
+            const inv = invoices.find(i => i.id === invoiceId);
+            const cust = customers.find(c => c.id === inv.customerId) || {};
+            if (!inv) return;
+
+            currentSimulation = { channel, invoice: inv, customer: cust };
+
+            document.getElementById('sim-channel').innerText = channel;
+            document.getElementById('sim-recipient').innerText = `${cust.name} (${cust.company})`;
+            document.getElementById('sim-contact').innerText = channel === 'WhatsApp' ? cust.phone : cust.email;
+            document.getElementById('sim-inv').innerText = inv.number;
+
+            let compiledMsg = '';
+            if (channel === 'WhatsApp') {
+                compiledMsg = reminderConfig.waTemplate
+                    .replace('{nama}', cust.name)
+                    .replace('{perusahaan}', cust.company)
+                    .replace('{invoice_no}', inv.number)
+                    .replace('{nominal}', formatIDR(inv.amount))
+                    .replace('{due_date}', inv.dueDate);
+            } else {
+                compiledMsg = `Subjek: ${reminderConfig.emailSubject.replace('{invoice_no}', inv.number)}\n\n` + reminderConfig.emailBody
+                    .replace('{nama}', cust.name)
+                    .replace('{perusahaan}', cust.company)
+                    .replace('{invoice_no}', inv.number)
+                    .replace('{nominal}', formatIDR(inv.amount))
+                    .replace('{due_date}', inv.dueDate);
+            }
+
+            document.getElementById('sim-message').value = compiledMsg;
+            document.getElementById('sim-loading').classList.add('hidden');
+            document.getElementById('sim-success').classList.add('hidden');
+            document.getElementById('btn-execute-send').disabled = false;
+            document.getElementById('btn-execute-send').classList.remove('opacity-50');
+
+            openModal('modal-simulator');
+        }
+
+        async function executeSendMessage() {
+            if (!currentSimulation) return;
+
+            document.getElementById('sim-loading').classList.remove('hidden');
+            document.getElementById('btn-execute-send').disabled = true;
+            document.getElementById('btn-execute-send').classList.add('opacity-50');
+
+            setTimeout(async () => {
+                document.getElementById('sim-loading').classList.add('hidden');
+                document.getElementById('sim-success').classList.remove('hidden');
+
+                const now = new Date();
+                const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+                const logData = {
+                    id: 'log_' + Date.now(),
+                    time: timeStr,
+                    channel: currentSimulation.channel,
+                    recipient: `${currentSimulation.customer.name} (${currentSimulation.customer.company})`,
+                    invoice: currentSimulation.invoice.number,
+                    message: document.getElementById('sim-message').value.substring(0, 80) + '...',
+                    status: 'Terkirim'
+                };
+
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'saveLog',
+                            data: logData
+                        })
+                    });
+
+                    const invRef = invoices.find(i => i.id === currentSimulation.invoice.id);
+                    if (invRef) {
+                        if (!invRef.remindersSent) invRef.remindersSent = [];
+                        const tag = currentSimulation.channel === 'WhatsApp' ? 'Manual WA' : 'Manual Email';
+                        if (!invRef.remindersSent.includes(tag)) {
+                            invRef.remindersSent.push(tag);
+
+                            await fetch(API_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    action: 'saveInvoice',
+                                    data: {
+                                        ...invRef,
+                                        remindersSent: invRef.remindersSent
+                                    }
+                                })
+                            });
+                        }
+                    }
+
+                    await fetchAllData();
+                    showToast(`Berhasil mengirim pengingat ke ${currentSimulation.customer.name}`);
+                } catch (error) {
+                    showToast('Gagal menyimpan log pengiriman');
+                }
+
+                setTimeout(() => {
+                    closeModal('modal-simulator');
+                }, 1200);
+            }, 1000);
+        }
+
+        function triggerAutoCheckReminders() {
+            let triggeredCount = 0;
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            invoices.forEach(inv => {
+                if (inv.status === 'Belum Lunas' || inv.status === 'Jatuh Tempo') {
+                    const due = new Date(inv.dueDate);
+                    const today = new Date(todayStr);
+                    const diffTime = due - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    let reminderTag = '';
+                    if (diffDays === 3 && reminderConfig.h3) reminderTag = 'H-3';
+                    else if (diffDays === 1 && reminderConfig.h1) reminderTag = 'H-1';
+                    else if (diffDays === 0 && reminderConfig.h0) reminderTag = 'Hari H';
+                    else if (diffDays < 0 && reminderConfig.overdue) reminderTag = 'Terlambat (H+)';
+
+                    if (reminderTag) {
+                        if (!inv.remindersSent) inv.remindersSent = [];
+                        if (!inv.remindersSent.includes(reminderTag)) {
+                            inv.remindersSent.push(reminderTag);
+                            triggeredCount++;
+
+                            const cust = customers.find(c => c.id === inv.customerId) || { name: 'Customer', company: '-' };
+                            logs.unshift({
+                                id: 'cron_' + Date.now() + Math.random(),
+                                time: todayStr + ' 08:00',
+                                channel: 'WhatsApp & Email',
+                                recipient: `${cust.name} (${cust.company})`,
+                                invoice: inv.number,
+                                message: `Automated reminder ${reminderTag} terkirim otomatis sistem.`,
+                                status: 'Terkirim'
+                            });
+                        }
+                    }
+                }
+            });
+
+            renderInvoices();
+            renderLogs();
+            updateDashboard();
+            showToast(`Sistem memeriksa jatuh tempo: ${triggeredCount} pengingat otomatis dikirim.`);
+        }
+
+        async function clearLogs() {
+            if (!confirm('Hapus seluruh riwayat log pengiriman?')) return;
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'clearLogs' })
+                });
+                await fetchAllData();
+                showToast('Log berhasil dibersihkan');
+            } catch (error) {
+                showToast('Gagal membersihkan log');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
